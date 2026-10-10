@@ -1,0 +1,6 @@
+# For tests and CI (no GUI needed)
+opencv-python-headless
+numpy
+matplotlib
+pillow
+pytest

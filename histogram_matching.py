@@ -1,6 +1,10 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+# Images are read from and saved next to this script.
+HERE = Path(__file__).resolve().parent
 
 
 def load_image(image_path):
@@ -25,6 +29,8 @@ def calculate_cdf(hist):
 
     cdf_min = cdf[0]
     cdf_max = cdf[-1]
+    if cdf_max == cdf_min:  # a single-colour image: nothing to spread out
+        return cdf, np.full(256, 255, dtype=np.uint8)
     cdf_normalized = np.round((cdf - cdf_min) / (cdf_max - cdf_min) * 255).astype(np.uint8)
 
     return cdf, cdf_normalized
@@ -52,8 +58,10 @@ def create_lookup_table(cdf_source, cdf_target):
         diff = float('inf')
         closest_j = 0
         for j in range(256):
-            if abs(cdf_source[i] - cdf_target[j]) < diff:
-                diff = abs(cdf_source[i] - cdf_target[j])
+            # int() so the uint8 values don't wrap around when subtracted
+            distance = abs(int(cdf_source[i]) - int(cdf_target[j]))
+            if distance < diff:
+                diff = distance
                 closest_j = j
         lookup_table[i] = closest_j
     return lookup_table
@@ -62,7 +70,7 @@ def create_lookup_table(cdf_source, cdf_target):
 def apply_lookup_table(img, lookup_table):
     img_flat = img.flatten()
     new_img_flat = [lookup_table[pixel] for pixel in img_flat]
-    new_img = np.reshape(new_img_flat, img.shape)
+    new_img = np.reshape(new_img_flat, img.shape).astype(np.uint8)
     return new_img
 
 def histogram_matching_manual(input_image_path, output_image_path, distribution_type='gaussian'):
@@ -77,6 +85,8 @@ def histogram_matching_manual(input_image_path, output_image_path, distribution_
         hist_target = generate_gaussian_distribution(img.size)
     elif distribution_type == 'exponential':
         hist_target = generate_exponential_distribution(img.size)
+    else:
+        raise ValueError("distribution_type must be 'gaussian' or 'exponential'")
 
     cdf_target, cdf_target_normalized = calculate_cdf(hist_target)
 
@@ -100,8 +110,9 @@ def histogram_matching_manual(input_image_path, output_image_path, distribution_
 
     plt.show()
 
-input_image_path = 'demo4.jpg'
-output_image_path = 'histogram_matched.png'
-distribution_type = 'gaussian'
+if __name__ == "__main__":
+    input_image_path = str(HERE / "demo4.jpg")
+    output_image_path = str(HERE / "histogram_matched.png")
+    distribution_type = 'gaussian'
 
-histogram_matching_manual(input_image_path, output_image_path, distribution_type)
+    histogram_matching_manual(input_image_path, output_image_path, distribution_type)
