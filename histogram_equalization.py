@@ -1,9 +1,13 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+# Images are read from and saved next to this script.
+HERE = Path(__file__).resolve().parent
 
 
-image = cv2.imread('demo4.jpg', cv2.IMREAD_GRAYSCALE)
+image = cv2.imread(str(HERE / "demo4.jpg"), cv2.IMREAD_GRAYSCALE)
 
 height, width = image.shape
 num_pixels = height * width
@@ -28,7 +32,7 @@ for i in range(height):
     for j in range(width):
         equalized_image[i, j] = cdf_normalized[image[i, j]]
 
-cv2.imwrite('equalized_image.png', equalized_image)
+cv2.imwrite(str(HERE / "equalized_image.png"), equalized_image)
 
 original_histogram = histogram
 equalized_histogram = np.zeros(256)
